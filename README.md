@@ -25,3 +25,19 @@ pip install -r requirements.txt
 ```
 streamlit run main.py
 ```
+
+
+## Code Organization
+
+```
+main.py is the gui script that calls
+   AppModel, which has all the data and methods it needs to store and show, and uses
+      MatlabMath to do the numerical calculations used with Matlab
+```
+
+Coding Ideas:
+  1. Create NumpyMath, an alternate backend that AppModel can use instead of MatlabMath that uses Numpy and Scipy-Signal.  Let the user select which backend should be used via a selection widget.
+  2. Fix the power spectrum so the frequencies are correct. 
+  3. Create a PyQt app that renders the same information.  Create a CLI that lets the user launch the desired gui backend.
+  4. Add a unit circle display, explaining how the sine and cosine are calculated.
+
