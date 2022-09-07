@@ -12,7 +12,7 @@ It shows a couple sine waves and computes a power spectrum (incorrectly, it turn
 Note: need administrative permission in Windows
 ```
 cd <matlab_install_directory>/extern/engines/python 
-python setup.py install
+pip install .
 ```
 
 ### Install Python deps
