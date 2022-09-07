@@ -18,7 +18,7 @@ pip install .
 ### Install Python deps
 ```
 cd <this_repo>
-pip install .
+pip install -r requirements.txt
 ```
 
 ## Run
