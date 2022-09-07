@@ -7,15 +7,11 @@ import matlab.engine
 from matlab.engine import MatlabEngine
 import numpy as np
 
-from app import MathBackend
-
-
 Numeric = Union[int, float, list[int], list[float], np.ndarray]
 
 
-
 @dataclass
-class MatlabMath(MathBackend):
+class MatlabMath:
     engine: MatlabEngine
 
     def sin(self, x: Numeric) -> Numeric:
