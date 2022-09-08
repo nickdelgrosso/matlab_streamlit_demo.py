@@ -1,12 +1,13 @@
 from __future__ import annotations
+import asyncio
 
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import dataclass, field, fields
 from typing import Any
 import numpy as np
 import pandas as pd
 
 
-from math_backend_matlab import MatlabMath, get_matlab_engine
+from math_backend_matlab import MatlabMath
 
 
 #% AppModel
@@ -39,36 +40,34 @@ class AppModel:
 
 
     @property
-    def sin_x(self) -> np.ndarray:
-        return self._mathlib.sin(self.sin_freq * self.x_values + self.sin_offset) * self.sin_amplitude
+    async def sin_x(self) -> np.ndarray:
+        s = await self._mathlib.sin(self.sin_freq * self.x_values + self.sin_offset) * self.sin_amplitude
+        return s
 
     @property
-    def cos_x(self) -> np.ndarray:
-        return self._mathlib.cos(self.cos_freq * self.x_values + self.cos_offset) * self.cos_amplitude
+    async def cos_x(self) -> np.ndarray:
+        return await self._mathlib.cos(self.cos_freq * self.x_values + self.cos_offset) * self.cos_amplitude
 
 
-    def calc_wide(self) -> pd.DataFrame:
+    async def calc_wide(self) -> pd.DataFrame:
         return pd.DataFrame({
             'x': self.x_values,
-            'sin': self.sin_x,
-            'cos': self.cos_x,
+            'sin': await self.sin_x,
+            'cos': await self.cos_x,
         })
 
-    def calc_long(self) -> pd.DataFrame:
-        return self.calc_wide().melt(id_vars=['x'], value_vars=['sin', 'cos'], var_name='fun', value_name='value')
-
-    def calc_power_spectra(self) -> pd.DataFrame:
-        freqs, sine_power = self._mathlib.power_spectrum(x=self.sin_x, fs=self.sampling_freq)
-        _, cosine_power = self._mathlib.power_spectrum(x=self.cos_x, fs=self.sampling_freq)
+    async def calc_power_spectra(self) -> pd.DataFrame:
+        sin_x, cos_x = await asyncio.gather(self.sin_x, self.cos_x)
+        (freqs, sine_power), (_, cosine_power) = await asyncio.gather(
+            self._mathlib.power_spectrum(x=sin_x, fs=self.sampling_freq),
+            self._mathlib.power_spectrum(x=cos_x, fs=self.sampling_freq)
+        )
         df = pd.DataFrame({'freq': freqs, 'sine_power': sine_power, 'cosine_power': cosine_power})
         return df
         # return df[df.freq <= max(self.sin_freq_max, self.cos_freq_max)]
 
-    def calc_power_spectra_long(self) -> pd.DataFrame:
-        return self.calc_power_spectra().melt(id_vars=['freq'], value_vars=['sine_power', 'cosine_power'], var_name='fun', value_name='power')
-
-    def get_freq_metrics(self) -> dict[str, dict[str, Any]]:
-        df = self.calc_power_spectra()
+    async def get_freq_metrics(self) -> dict[str, dict[str, Any]]:
+        df = await self.calc_power_spectra()
         return {
             'cos': {
                 'freq': df[df['cosine_power'] == df['cosine_power'].max()].freq.mean()

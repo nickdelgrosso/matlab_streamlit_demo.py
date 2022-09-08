@@ -1,5 +1,7 @@
 from ast import Num
-from dataclasses import dataclass
+import asyncio
+from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import  Tuple, Union
 
 import matlab
@@ -10,39 +12,57 @@ import numpy as np
 Numeric = Union[int, float, list[int], list[float], np.ndarray]
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class MatlabMath:
-    engine: MatlabEngine
+    engine: MatlabEngine = field(hash=False)
 
-    def sin(self, x: Numeric) -> Numeric:
+    async def sin(self, x: Numeric) -> Numeric:
         vector = matlab.double(x)
-        sin_x = self.engine.sin(vector)
-        return matlab_double_to_python(sin_x)
+        future = self.engine.sin(vector, background=True)
+        while not future.done():
+            await asyncio.sleep(0)
+        result = future.result()
+        return matlab_double_to_python(result)
     
-    def cos(self, x: Numeric) -> Numeric:
+    async def cos(self, x: Numeric) -> Numeric:
         vector = matlab.double(x)
-        cos_x = self.engine.cos(vector)
-        return matlab_double_to_python(cos_x)
+        
+        future = self.engine.cos(vector, background=True)
+        while not future.done():
+            await asyncio.sleep(0)
+        result = future.result()
+        return matlab_double_to_python(result)
 
-    def fft(self, x: Numeric) -> Numeric:
+    async def fft(self, x: Numeric) -> Numeric:
         vector = matlab.double(x)
-        result = self.engine.fft(vector)
+        future = self.engine.fft(vector, background=True)
+        while not future.done():
+            await asyncio.sleep(0)
+        result = future.result()
         real_result = self.engine.real(result)
         return matlab_double_to_python(real_result)
 
-    def abs(self, x: Numeric) -> Numeric:
+    async def abs(self, x: Numeric) -> Numeric:
         vector = matlab.double(x)
-        result = self.engine.abs(vector)
+        future = self.engine.abs(vector, background=True)
+        while not future.done():
+            await asyncio.sleep(0)
+        result = future.result()
         return matlab_double_to_python(result)
 
-    def power(self, x: Numeric, order: float) -> Numeric:
+    async def power(self, x: Numeric, order: float) -> Numeric:
         vector = matlab.double(x)
-        result = self.engine.power(vector, order)
+        # result = self.engine.power(vector, order)
+        # t0 
+        future = self.engine.power(vector, order, background=True)
+        while not future.done():
+            await asyncio.sleep(0)
+        result = future.result()
         return matlab_double_to_python(result)
 
-    def power_spectrum(self, x: Numeric, fs: float) -> Tuple[Numeric, Numeric]:
+    async def power_spectrum(self, x: Numeric, fs: float) -> Tuple[Numeric, Numeric]:
         n = len(x)
-        power = self.power(self.abs(self.fft(x)), fs / n)
+        power = await self.power(await self.abs(await self.fft(x)), fs / n)
         freqs = np.arange(n) * (fs / n)
         return freqs[:n//2], power[:n//2]
 
