@@ -35,9 +35,10 @@ main.py is the gui script that calls
       MatlabMath to do the numerical calculations used with Matlab
 ```
 
-Coding Ideas:
+## Coding Ideas:
   1. Create NumpyMath, an alternate backend that AppModel can use instead of MatlabMath that uses Numpy and Scipy-Signal.  Let the user select which backend should be used via a selection widget.
   2. Fix the power spectrum so the frequencies are correct. 
   3. Create a PyQt app that renders the same information.  Create a CLI that lets the user launch the desired gui backend.
   4. Add a unit circle display, explaining how the sine and cosine are calculated.
+  5. There's a noticable delay when updating the widgets (~100-200 msecs); could we decrease this by adding some concurrent processing?
 
